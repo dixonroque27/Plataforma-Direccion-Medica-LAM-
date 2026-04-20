@@ -1,105 +1,443 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dirección Médica LAM - Entrenamiento Virtual</title>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; margin: 0; overflow: hidden; }
-        .bg-main {
-            background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), 
-                        url('https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=2069');
-            background-size: cover;
-            background-position: center;
-            height: 100vh; width: 100vw;
+  <meta charset="UTF-8" />
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Virtual LAM - Entrenamiento</title>
+
+  <!-- Tailwind CSS para Estilos Premium -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- React y ReactDOM -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <!-- Babel para compilar JSX en el navegador -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f1f5f9;
+      color: #0f172a;
+    }
+    
+    /* Smooth Transitions */
+    * {
+      transition: all 0.2s ease-in-out;
+    }
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    
+    /* Glassmorphism Classes */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    }
+    
+    .glass-sidebar {
+      background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+      color: white;
+    }
+    
+    /* Progress Bar Animation */
+    .progress-bar-fill {
+      transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  </style>
+
+  <script>
+    // Configuración de Tailwind Personalizada
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              900: '#1e3a8a',
+            }
+          }
         }
-        .glass-sidebar {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-right: 1px solid #e2e8f0;
-        }
-        .selector-card {
-            background: white; border-radius: 20px;
-            display: flex; align-items: center; justify-content: center;
-            padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            cursor: pointer;
-        }
-        .selector-card:hover { transform: scale(1.1); }
-    </style>
+      }
+    }
+  </script>
 </head>
 <body>
-    <div id="root"></div>
-    <script type="text/babel">
-        const { useState, useEffect } = React;
+  <div id="root"></div>
 
-        const DATA_MOCK = {
-            usuario: { nombre: "Visitador Demostración", iniciales: "VD" },
-            lineas: [
-                { id: 'LAM', logo: 'https://i.postimg.cc/85zX8z7y/lam.png' },
-                { id: 'GROB', logo: 'https://i.postimg.cc/BvP4R4f8/grob.png' },
-                { id: 'CARDIO', logo: 'https://i.postimg.cc/44Nf5pS8/cardio.png' },
-                { id: 'AXIS', logo: 'https://i.postimg.cc/9f0vQY3M/axis.png' },
-                { id: 'MAMEY', logo: 'https://i.postimg.cc/mD8z6x7X/mamey.png' }
-            ]
-        };
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
 
-        function App() {
-            useEffect(() => { lucide.createIcons(); }, []);
+    // --- Mock environment for Google Scripts ---
+    const isGAS = typeof google !== 'undefined' && google.script && google.script.run;
+    
+    const serverParams = {
+      getAsignaciones: (cb) => {
+        if(isGAS) google.script.run.withSuccessHandler(cb).getAsignaciones();
+        else setTimeout(() => cb({
+            materiales: [
+              { id: 'm1', titulo: 'Introducción a Productos Cardiológicos', tipo: 'PDF', url: '#', leido: true },
+              { id: 'm2', titulo: 'Mecanismo de Acción: Producto X', tipo: 'Video', url: '#', leido: false },
+              { id: 'm3', titulo: 'Manual de Objeciones Comunes', tipo: 'Doc', url: '#', leido: false }
+            ],
+            examenes: [
+              { id: 'e1', titulo: 'Evaluación: Cardiología Básico', estado: 'Pendiente', preguntas: 5 },
+              { id: 'e2', titulo: 'Test de Habilidades: Objeciones', estado: 'Completado', nota: 85 }
+            ],
+            progreso: 33
+        }), 500);
+      },
+      obtenerEstadisticas: (cb) => {
+        if(isGAS) google.script.run.withSuccessHandler(cb).obtenerEstadisticas();
+        else setTimeout(() => cb({
+            rendimientoPorLinea: {
+              labels: ['Cardiología', 'Neurología', 'Respiratorio', 'Metabólico'],
+              data: [85, 92, 78, 88]
+            },
+            estudiantesActivos: 42,
+            examenesCompletados: 128,
+            promedioGeneral: 85.7
+        }), 500);
+      },
+      registrarAvance: (id, cb) => {
+        if(isGAS) google.script.run.withSuccessHandler(cb).registrarAvanceMaterial(id);
+        else setTimeout(() => cb({success: true, nuevoProgreso: 66}), 500);
+      }
+    };
 
-            return (
-                <div className="bg-main flex h-screen">
-                    <aside className="w-64 glass-sidebar flex flex-col p-6 shadow-2xl">
-                        <div className="mb-10">
-                            <h1 className="text-[#0d9488] font-black text-xl leading-tight uppercase">Dirección Médica LAM</h1>
-                            <p className="text-[#0d9488] text-[10px] font-bold tracking-widest">(Entrenamiento Virtual)</p>
-                        </div>
-                        <nav className="flex-1 space-y-2">
-                            <button className="w-full flex items-center gap-3 p-3 text-sm font-bold bg-[#0d9488] text-white rounded-xl shadow-lg">
-                                <i data-lucide="book-open" className="w-4"></i> Entrenamientos
-                            </button>
-                            <button className="w-full flex items-center gap-3 p-3 text-sm font-semibold text-slate-400 hover:bg-slate-50 rounded-xl">
-                                <i data-lucide="bar-chart-2" className="w-4"></i> Rendimiento
-                            </button>
-                        </nav>
-                        <div className="mt-auto">
-                            <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl mb-4 border border-slate-100">
-                                <div className="w-10 h-10 bg-[#0d9488] rounded-full flex items-center justify-center text-white font-black text-xs shadow-md">{DATA_MOCK.usuario.iniciales}</div>
-                                <div className="text-[10px]">
-                                    <p className="font-black text-slate-800">{DATA_MOCK.usuario.nombre}</p>
-                                    <p className="text-slate-400 uppercase font-bold tracking-tighter">Visitador Médico</p>
-                                </div>
-                            </div>
-                            <button className="w-full bg-[#84cc16] hover:bg-[#65a30d] text-white py-3 rounded-xl text-xs font-black uppercase shadow-lg transition-all">Encargado</button>
-                        </div>
-                    </aside>
-
-                    <main className="flex-1 flex flex-col items-center justify-center p-12">
-                        <div className="mb-16">
-                            <h2 className="bg-white/95 px-10 py-4 rounded-2xl text-[#0d9488] font-black text-2xl shadow-2xl border border-white/50">
-                                Selecciona una Línea (Ecosistema)
-                            </h2>
-                        </div>
-                        <div className="grid grid-cols-5 gap-8 w-full max-w-6xl px-10">
-                            {DATA_MOCK.lineas.map(l => (
-                                <div key={l.id} className="selector-card aspect-square">
-                                    <img src={l.logo} alt={l.id} className="max-w-full max-h-full object-contain" />
-                                </div>
-                            ))}
-                        </div>
-                    </main>
-                </div>
-            );
+    // --- Component: Icon ---
+    // Uses Lucide icons initialized dynamically
+    const Icon = ({ name, size = 24, className = "" }) => {
+      const iconRef = useRef(null);
+      useEffect(() => {
+        if (iconRef.current && window.lucide) {
+          iconRef.current.innerHTML = '';
+          const iconNode = document.createElement('i');
+          iconNode.setAttribute('data-lucide', name);
+          iconRef.current.appendChild(iconNode);
+          window.lucide.createIcons({ root: iconRef.current });
+          
+          const svg = iconRef.current.querySelector('svg');
+          if (svg) {
+            svg.setAttribute('width', size);
+            svg.setAttribute('height', size);
+            if(className) svg.setAttribute('class', className);
+          }
         }
+      }, [name, size, className]);
+      
+      return <span ref={iconRef} className="inline-flex content-center items-center" />;
+    };
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+    // --- Component: Chart ---
+    const PerformanceChart = ({ data }) => {
+      const chartRef = useRef(null);
+      const chartInstance = useRef(null);
+
+      useEffect(() => {
+        if (chartRef.current) {
+          if (chartInstance.current) chartInstance.current.destroy();
+          const ctx = chartRef.current.getContext('2d');
+          chartInstance.current = new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: data.labels,
+              datasets: [{
+                label: 'Promedio de Notas (%)',
+                data: data.data,
+                backgroundColor: 'rgba(59, 130, 246, 0.8)', // blue-500
+                borderRadius: 6,
+                borderWidth: 0
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: { y: { beginAtZero: true, max: 100 } }
+            }
+          });
+        }
+        return () => { if (chartInstance.current) chartInstance.current.destroy(); }
+      }, [data]);
+
+      return (
+        <div style={{ height: '300px' }} className="w-full">
+          <canvas ref={chartRef}></canvas>
+        </div>
+      );
+    };
+
+    // --- View: Student Dashboard ---
+    const StudentDashboard = () => {
+      const [data, setData] = useState({ materiales: [], examenes: [], progreso: 0 });
+      const [loading, setLoading] = useState(true);
+
+      useEffect(() => {
+        serverParams.getAsignaciones((res) => {
+          setData(res);
+          setLoading(false);
+        });
+      }, []);
+
+      const marcarLeido = (id) => {
+        serverParams.registrarAvance(id, (res) => {
+           if(res.success) {
+              setData(prev => ({
+                ...prev,
+                progreso: res.nuevoProgreso,
+                materiales: prev.materiales.map(m => m.id === id ? {...m, leido: true} : m)
+              }));
+           }
+        });
+      };
+
+      if (loading) return <div className="flex h-full items-center justify-center p-12"><Icon name="loader-2" className="animate-spin text-brand-600" size={48} /></div>;
+
+      return (
+        <div className="space-y-8 animate-fade-in">
+          {/* Header Progress */}
+          <div className="glass-card rounded-2xl p-8 flex flex-col md:flex-row gap-6 items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="p-4 bg-brand-100 rounded-full text-brand-600">
+                <Icon name="graduation-cap" size={32} />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-slate-800">Tu Ruta de Entrenamiento</h2>
+                <p className="text-slate-500">Línea de Cardiología</p>
+              </div>
+            </div>
+            
+            <div className="w-full md:w-1/3">
+              <div className="flex justify-between mb-2">
+                <span className="text-sm font-medium text-brand-700">Progreso Total</span>
+                <span className="text-sm font-bold text-brand-700">{data.progreso}%</span>
+              </div>
+              <div className="w-full bg-slate-200 rounded-full h-3 mb-1 overflow-hidden">
+                <div className="bg-brand-500 h-3 rounded-full progress-bar-fill" style={{ width: `${data.progreso}%` }}></div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Materials List */}
+            <div className="glass-card rounded-2xl p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <Icon name="book-open" className="text-brand-600" />
+                <h3 className="text-xl font-bold text-slate-800">Material de Estudio</h3>
+              </div>
+              <div className="space-y-4">
+                {data.materiales.map(mat => (
+                  <div key={mat.id} className="flex items-center justify-between p-4 rounded-xl border border-slate-100 hover:border-brand-200 hover:shadow-md bg-white">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${mat.tipo === 'PDF' ? 'bg-red-100 text-red-600' : mat.tipo === 'Video' ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'}`}>
+                         <Icon name={mat.tipo === 'Video' ? 'play-circle' : 'file-text'} size={20} />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-slate-700">{mat.titulo}</h4>
+                        <span className="text-xs text-slate-400">{mat.tipo}</span>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => !mat.leido && marcarLeido(mat.id)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 ${mat.leido ? 'bg-green-100 text-green-700 cursor-default' : 'bg-brand-50 hover:bg-brand-100 text-brand-700'}`}>
+                      {mat.leido ? <><Icon name="check-circle-2" size={16}/> Completado</> : 'Abrir'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Exams List */}
+            <div className="glass-card rounded-2xl p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <Icon name="clipboard-check" className="text-brand-600" />
+                <h3 className="text-xl font-bold text-slate-800">Exámenes Asignados</h3>
+              </div>
+              <div className="space-y-4">
+                 {data.examenes.map(ex => (
+                  <div key={ex.id} className="group relative overflow-hidden flex flex-col p-5 rounded-xl border border-slate-100 bg-white hover:shadow-lg">
+                    <div className="flex justify-between items-start mb-4">
+                       <h4 className="font-semibold text-lg text-slate-800">{ex.titulo}</h4>
+                       <span className={`px-3 py-1 rounded-full text-xs font-bold ${ex.estado === 'Completado' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                         {ex.estado}
+                       </span>
+                    </div>
+                    
+                    {ex.estado === 'Completado' ? (
+                      <div className="mt-auto pt-4 border-t border-slate-100 flex justify-between items-center">
+                         <span className="text-slate-500 text-sm">Calificación Obtenida</span>
+                         <span className="text-2xl font-bold text-slate-800">{ex.nota}/100</span>
+                      </div>
+                    ) : (
+                      <div className="mt-auto pt-4 flex justify-between items-center">
+                         <span className="text-slate-500 text-sm">{ex.preguntas} preguntas</span>
+                         <button className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-lg text-sm font-semibold shadow-sm hover:shadow flex items-center gap-2">
+                           Comenzar <Icon name="arrow-right" size={16} />
+                         </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // --- View: Admin Dashboard ---
+    const AdminDashboard = () => {
+      const [stats, setStats] = useState(null);
+
+      useEffect(() => {
+        serverParams.obtenerEstadisticas(res => setStats(res));
+      }, []);
+
+      if(!stats) return <div className="flex justify-center p-12"><Icon name="loader-2" className="animate-spin text-brand-600" size={48} /></div>;
+
+      return (
+        <div className="space-y-8 animate-fade-in">
+          <div className="glass-card rounded-2xl p-6  flex justify-between items-center bg-white border-brand-200 border-l-4">
+             <div>
+                <h2 className="text-2xl font-bold text-slate-800">Panel de Encargados</h2>
+                <p className="text-slate-500">Gestión de Evaluaciones y Métricas de Rendimiento</p>
+             </div>
+             <button className="bg-brand-900 hover:bg-brand-800 text-white px-6 py-3 rounded-xl font-bold shadow-lg flex items-center gap-2">
+               <Icon name="plus-circle" size={20} />
+               Asignar Nuevo Examen
+             </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="glass-card rounded-2xl p-6 flex items-center gap-4 border-l-4 border-blue-500">
+               <div className="p-4 bg-blue-100 rounded-2xl text-blue-600">
+                 <Icon name="users" size={32} />
+               </div>
+               <div>
+                 <p className="text-slate-500 text-sm font-medium">Estudiantes Activos</p>
+                 <p className="text-3xl font-black text-slate-800">{stats.estudiantesActivos}</p>
+               </div>
+            </div>
+            
+            <div className="glass-card rounded-2xl p-6 flex items-center gap-4 border-l-4 border-green-500">
+               <div className="p-4 bg-green-100 rounded-2xl text-green-600">
+                 <Icon name="clipboard-list" size={32} />
+               </div>
+               <div>
+                 <p className="text-slate-500 text-sm font-medium">Exámenes Realizados</p>
+                 <p className="text-3xl font-black text-slate-800">{stats.examenesCompletados}</p>
+               </div>
+            </div>
+
+            <div className="glass-card rounded-2xl p-6 flex items-center gap-4 border-l-4 border-purple-500">
+               <div className="p-4 bg-purple-100 rounded-2xl text-purple-600">
+                 <Icon name="bar-chart" size={32} />
+               </div>
+               <div>
+                 <p className="text-slate-500 text-sm font-medium">Promedio General</p>
+                 <p className="text-3xl font-black text-slate-800">{stats.promedioGeneral}%</p>
+               </div>
+            </div>
+          </div>
+
+          <div className="glass-card rounded-2xl p-6">
+             <div className="flex items-center gap-3 mb-6">
+                <Icon name="activity" className="text-brand-600" />
+                <h3 className="text-xl font-bold text-slate-800">Rendimiento por Línea de Producto</h3>
+             </div>
+             <PerformanceChart data={stats.rendimientoPorLinea} />
+          </div>
+        </div>
+      );
+    }
+
+    // --- Main App Layout ---
+    const App = () => {
+      const [role, setRole] = useState('student'); // 'student' | 'admin'
+
+      return (
+        <div className="flex h-screen overflow-hidden">
+          {/* Sidebar */}
+          <aside className="w-64 flex-shrink-0 glass-sidebar flex flex-col h-full hidden md:flex shadow-xl z-10 relative">
+            <div className="p-6">
+               <div className="flex items-center gap-3 mb-10">
+                 <div className="w-10 h-10 bg-brand-500 rounded-lg flex items-center justify-center text-white font-bold shadow-lg shadow-brand-500/50">
+                   LAM
+                 </div>
+                 <h1 className="text-xl font-black tracking-wide text-white">VIRTUAL</h1>
+               </div>
+               
+               <nav className="space-y-2">
+                 <button onClick={() => setRole('student')} className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${role === 'student' ? 'bg-white/20 text-white font-semibold shadow-inner' : 'text-slate-400 hover:text-white hover:bg-white/10'}`}>
+                   <Icon name="layout-dashboard" size={20} />
+                   <span>Vista Empleado</span>
+                 </button>
+                 <button onClick={() => setRole('admin')} className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${role === 'admin' ? 'bg-white/20 text-white font-semibold shadow-inner' : 'text-slate-400 hover:text-white hover:bg-white/10'}`}>
+                   <Icon name="shield-check" size={20} />
+                   <span>Vista Encargado</span>
+                 </button>
+               </nav>
+            </div>
+            
+            <div className="mt-auto p-6 border-t border-white/10">
+               <div className="flex items-center gap-3">
+                 <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-brand-400 to-brand-600 flex items-center justify-center border-2 border-slate-700">
+                    <Icon name="user" size={20} className="text-white" />
+                 </div>
+                 <div>
+                   <p className="text-sm font-bold text-white">Usuario Demo</p>
+                   <p className="text-xs text-slate-400">{role === 'admin' ? 'Administrador' : 'Visitador Médico'}</p>
+                 </div>
+               </div>
+            </div>
+          </aside>
+
+          {/* Main Content Area */}
+          <main className="flex-1 overflow-y-auto w-full">
+            <div className="max-w-6xl mx-auto p-4 md:p-8">
+              {/* Mobile Header */}
+              <div className="md:hidden flex items-center justify-between mb-8 glass-card p-4 rounded-xl">
+                 <div className="flex items-center gap-2">
+                   <div className="w-8 h-8 bg-brand-500 rounded flex items-center justify-center text-white font-bold">L</div>
+                   <h1 className="font-bold">Virtual LAM</h1>
+                 </div>
+                 <select value={role} onChange={(e) => setRole(e.target.value)} className="bg-slate-100 rounded-lg px-3 py-1 text-sm font-medium border-none outline-none">
+                   <option value="student">Estudiante</option>
+                   <option value="admin">Admin</option>
+                 </select>
+              </div>
+
+              {/* Dynamic View */}
+              {role === 'student' ? <StudentDashboard /> : <AdminDashboard />}
+            </div>
+          </main>
+        </div>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
 </body>
 </html>
