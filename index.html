@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dirección Médica LAM - Entrenamiento Virtual</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; margin: 0; overflow: hidden; }
+        .bg-main {
+            background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), 
+                        url('https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=2069');
+            background-size: cover;
+            background-position: center;
+            height: 100vh; width: 100vw;
+        }
+        .glass-sidebar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid #e2e8f0;
+        }
+        .selector-card {
+            background: white; border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+        }
+        .selector-card:hover { transform: scale(1.1); }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const DATA_MOCK = {
+            usuario: { nombre: "Visitador Demostración", iniciales: "VD" },
+            lineas: [
+                { id: 'LAM', logo: 'https://i.postimg.cc/85zX8z7y/lam.png' },
+                { id: 'GROB', logo: 'https://i.postimg.cc/BvP4R4f8/grob.png' },
+                { id: 'CARDIO', logo: 'https://i.postimg.cc/44Nf5pS8/cardio.png' },
+                { id: 'AXIS', logo: 'https://i.postimg.cc/9f0vQY3M/axis.png' },
+                { id: 'MAMEY', logo: 'https://i.postimg.cc/mD8z6x7X/mamey.png' }
+            ]
+        };
+
+        function App() {
+            useEffect(() => { lucide.createIcons(); }, []);
+
+            return (
+                <div className="bg-main flex h-screen">
+                    <aside className="w-64 glass-sidebar flex flex-col p-6 shadow-2xl">
+                        <div className="mb-10">
+                            <h1 className="text-[#0d9488] font-black text-xl leading-tight uppercase">Dirección Médica LAM</h1>
+                            <p className="text-[#0d9488] text-[10px] font-bold tracking-widest">(Entrenamiento Virtual)</p>
+                        </div>
+                        <nav className="flex-1 space-y-2">
+                            <button className="w-full flex items-center gap-3 p-3 text-sm font-bold bg-[#0d9488] text-white rounded-xl shadow-lg">
+                                <i data-lucide="book-open" className="w-4"></i> Entrenamientos
+                            </button>
+                            <button className="w-full flex items-center gap-3 p-3 text-sm font-semibold text-slate-400 hover:bg-slate-50 rounded-xl">
+                                <i data-lucide="bar-chart-2" className="w-4"></i> Rendimiento
+                            </button>
+                        </nav>
+                        <div className="mt-auto">
+                            <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl mb-4 border border-slate-100">
+                                <div className="w-10 h-10 bg-[#0d9488] rounded-full flex items-center justify-center text-white font-black text-xs shadow-md">{DATA_MOCK.usuario.iniciales}</div>
+                                <div className="text-[10px]">
+                                    <p className="font-black text-slate-800">{DATA_MOCK.usuario.nombre}</p>
+                                    <p className="text-slate-400 uppercase font-bold tracking-tighter">Visitador Médico</p>
+                                </div>
+                            </div>
+                            <button className="w-full bg-[#84cc16] hover:bg-[#65a30d] text-white py-3 rounded-xl text-xs font-black uppercase shadow-lg transition-all">Encargado</button>
+                        </div>
+                    </aside>
+
+                    <main className="flex-1 flex flex-col items-center justify-center p-12">
+                        <div className="mb-16">
+                            <h2 className="bg-white/95 px-10 py-4 rounded-2xl text-[#0d9488] font-black text-2xl shadow-2xl border border-white/50">
+                                Selecciona una Línea (Ecosistema)
+                            </h2>
+                        </div>
+                        <div className="grid grid-cols-5 gap-8 w-full max-w-6xl px-10">
+                            {DATA_MOCK.lineas.map(l => (
+                                <div key={l.id} className="selector-card aspect-square">
+                                    <img src={l.logo} alt={l.id} className="max-w-full max-h-full object-contain" />
+                                </div>
+                            ))}
+                        </div>
+                    </main>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
